@@ -35,13 +35,14 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
     private var _binding: FragmentVideoBinding? = null
     private val binding: FragmentVideoBinding
         get() = _binding!!
-    private lateinit var videoAnalytics: ConvivaVideoAnalytics
     private lateinit var player: ExoPlayer
 
     private val listener: Player.Listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) {
             super.onEvents(player, events)
-            println("nannandenden onEvents ${events.size()}")
+            for (index in 0 until events.size()) {
+                println("nannandenden onEvents ${events.get(index)}")
+            }
         }
 
         override fun onTimelineChanged(timeline: Timeline, reason: Int) {
@@ -98,7 +99,10 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
                 STATE_IDLE -> { "idle" }
                 STATE_BUFFERING -> {"buffering"}
                 STATE_READY -> { "ready" }
-                STATE_ENDED -> { "ended"}
+                STATE_ENDED -> {
+                    VideoAnalytics.reportPlaybackEnded()
+                    "ended"
+                }
                 else -> "invalid state"
             }
             println("nannandenden onPlaybackStateChanged $state")
@@ -249,22 +253,27 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
     override fun onDestroyView() {
         super.onDestroyView()
         player.removeListener(listener)
+        player.release()
         _binding = null
-        VideoAnalytics.reportPlaybackEnded()
     }
 
     private fun startPlay(context: Context) {
-        VideoAnalytics.reportPlaybackRequested()
         VideoAnalytics.setContentInfo(
             mapOf(
                 ConvivaSdkConstants.ASSET_NAME to "Funny Cat",
-                "c3.cm.contentType" to "Live-Linear",
+                ConvivaSdkConstants.VIEWER_ID to "test_viewer_id",
+                ConvivaSdkConstants.IS_LIVE to false,
+                ConvivaSdkConstants.PLAYER_NAME to "text player name",
+                "c3.cm.contentType" to ConvivaSdkConstants.StreamType.LIVE,
                 "Custom Business Info" to "custom"
             )
         )
 
+        VideoAnalytics.reportPlaybackRequested()
+
         // create a player
         player = ExoPlayer.Builder(context).build()
+        VideoAnalytics.setPlayer(player)
         // attach to the playerView
         binding.playerView.player = player
         player.addListener(listener)
