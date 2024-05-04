@@ -3,32 +3,38 @@ package com.example.mystreamapplication
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore.Video
 import android.view.View
+import androidx.annotation.OptIn
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.media3.common.AudioAttributes
-import androidx.media3.common.DeviceInfo
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
+import androidx.media3.common.MediaItem.AdsConfiguration
 import androidx.media3.common.PlaybackException
-import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.Player.STATE_BUFFERING
 import androidx.media3.common.Player.STATE_ENDED
 import androidx.media3.common.Player.STATE_IDLE
 import androidx.media3.common.Player.STATE_READY
-import androidx.media3.common.Timeline
-import androidx.media3.common.TrackSelectionParameters
-import androidx.media3.common.Tracks
-import androidx.media3.common.VideoSize
-import androidx.media3.common.text.CueGroup
-import androidx.media3.common.util.Log.Logger
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.ima.ImaAdsLoader
+import androidx.media3.exoplayer.ima.ImaServerSideAdInsertionMediaSource
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.exoplayer.source.ads.AdsLoader
+import androidx.media3.exoplayer.source.ads.AdsMediaSource
 import androidx.media3.exoplayer.util.EventLogger
-import com.conviva.sdk.ConvivaAnalytics
+import androidx.media3.ui.PlayerView
 import com.conviva.sdk.ConvivaSdkConstants
-import com.conviva.sdk.ConvivaVideoAnalytics
 import com.example.mystreamapplication.databinding.FragmentVideoBinding
+import com.google.ads.interactivemedia.v3.api.AdEvent
+import com.google.ads.interactivemedia.v3.api.AdEvent.AdEventListener
+import com.google.ads.interactivemedia.v3.api.AdsManager
+import com.google.ads.interactivemedia.v3.api.player.VideoAdPlayer
+
 
 class VideoFragment : Fragment(R.layout.fragment_video) {
 
@@ -36,6 +42,12 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
     private val binding: FragmentVideoBinding
         get() = _binding!!
     private lateinit var player: ExoPlayer
+
+    private var adsLoader: ImaAdsLoader? = null
+    private var adsManager: AdsManager? = null
+
+    @UnstableApi
+    private var serverSideAdsLoader: ImaServerSideAdInsertionMediaSource.AdsLoader? = null
 
     private val listener: Player.Listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) {
@@ -45,54 +57,6 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
             }
         }
 
-        override fun onTimelineChanged(timeline: Timeline, reason: Int) {
-            super.onTimelineChanged(timeline, reason)
-            println("nannandenden onTimelineChanged $timeline")
-
-        }
-
-        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            super.onMediaItemTransition(mediaItem, reason)
-            println("nannandenden onMediaItemTransition $mediaItem")
-
-        }
-
-        override fun onTracksChanged(tracks: Tracks) {
-            super.onTracksChanged(tracks)
-            println("nannandenden onTracksChanged")
-
-        }
-
-        override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-            super.onMediaMetadataChanged(mediaMetadata)
-            println("nannandenden onMediaMetadataChanged")
-
-        }
-
-        override fun onPlaylistMetadataChanged(mediaMetadata: MediaMetadata) {
-            super.onPlaylistMetadataChanged(mediaMetadata)
-            println("nannandenden onPlaylistMetadataChanged")
-
-        }
-
-        override fun onIsLoadingChanged(isLoading: Boolean) {
-            super.onIsLoadingChanged(isLoading)
-            println("nannandenden onIsLoadingChanged $isLoading")
-
-        }
-
-        override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
-            super.onAvailableCommandsChanged(availableCommands)
-            println("nannandenden onAvailableCommandsChanged $availableCommands")
-
-        }
-
-        override fun onTrackSelectionParametersChanged(parameters: TrackSelectionParameters) {
-            super.onTrackSelectionParametersChanged(parameters)
-            println("nannandenden onTrackSelectionParametersChanged")
-
-        }
-
         override fun onPlaybackStateChanged(playbackState: Int) {
             super.onPlaybackStateChanged(playbackState)
             val state = when(playbackState) {
@@ -100,42 +64,11 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
                 STATE_BUFFERING -> {"buffering"}
                 STATE_READY -> { "ready" }
                 STATE_ENDED -> {
-                    VideoAnalytics.reportPlaybackEnded()
                     "ended"
                 }
                 else -> "invalid state"
             }
             println("nannandenden onPlaybackStateChanged $state")
-
-        }
-
-        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-            super.onPlayWhenReadyChanged(playWhenReady, reason)
-            println("nannandenden onPlayWhenReadyChanged $playWhenReady")
-
-        }
-
-        override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason: Int) {
-            super.onPlaybackSuppressionReasonChanged(playbackSuppressionReason)
-            println("nannandenden onPlaybackSuppressionReasonChanged")
-
-        }
-
-        override fun onIsPlayingChanged(isPlaying: Boolean) {
-            super.onIsPlayingChanged(isPlaying)
-            println("nannandenden onIsPlayingChanged $isPlaying")
-
-        }
-
-        override fun onRepeatModeChanged(repeatMode: Int) {
-            super.onRepeatModeChanged(repeatMode)
-            println("nannandenden onRepeatModeChanged")
-
-        }
-
-        override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
-            super.onShuffleModeEnabledChanged(shuffleModeEnabled)
-            println("nannandenden onShuffleModeEnabledChanged")
 
         }
 
@@ -150,104 +83,29 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
             println("nannandenden onPlayerErrorChanged")
 
         }
-
-        override fun onPositionDiscontinuity(
-            oldPosition: Player.PositionInfo,
-            newPosition: Player.PositionInfo,
-            reason: Int
-        ) {
-            super.onPositionDiscontinuity(oldPosition, newPosition, reason)
-            println("nannandenden onPositionDiscontinuity")
-
-        }
-
-        override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
-            super.onPlaybackParametersChanged(playbackParameters)
-            println("nannandenden onPlaybackParametersChanged")
-
-        }
-
-        override fun onSeekBackIncrementChanged(seekBackIncrementMs: Long) {
-            super.onSeekBackIncrementChanged(seekBackIncrementMs)
-            println("nannandenden onSeekBackIncrementChanged")
-
-        }
-
-        override fun onSeekForwardIncrementChanged(seekForwardIncrementMs: Long) {
-            super.onSeekForwardIncrementChanged(seekForwardIncrementMs)
-            println("nannandenden onSeekForwardIncrementChanged")
-
-        }
-
-        override fun onMaxSeekToPreviousPositionChanged(maxSeekToPreviousPositionMs: Long) {
-            super.onMaxSeekToPreviousPositionChanged(maxSeekToPreviousPositionMs)
-            println("nannandenden onMaxSeekToPreviousPositionChanged")
-
-        }
-
-        override fun onAudioAttributesChanged(audioAttributes: AudioAttributes) {
-            super.onAudioAttributesChanged(audioAttributes)
-            println("nannandenden onAudioAttributesChanged")
-
-        }
-
-        override fun onVolumeChanged(volume: Float) {
-            super.onVolumeChanged(volume)
-            println("nannandenden onVolumeChanged")
-
-        }
-
-        override fun onSkipSilenceEnabledChanged(skipSilenceEnabled: Boolean) {
-            super.onSkipSilenceEnabledChanged(skipSilenceEnabled)
-            println("nannandenden onSkipSilenceEnabledChanged")
-
-        }
-
-        override fun onDeviceInfoChanged(deviceInfo: DeviceInfo) {
-            super.onDeviceInfoChanged(deviceInfo)
-            println("nannandenden onDeviceInfoChanged")
-
-        }
-
-        override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
-            super.onDeviceVolumeChanged(volume, muted)
-            println("nannandenden onDeviceVolumeChanged")
-
-        }
-
-        override fun onVideoSizeChanged(videoSize: VideoSize) {
-            super.onVideoSizeChanged(videoSize)
-            println("nannandenden onVideoSizeChanged")
-
-        }
-
-        override fun onSurfaceSizeChanged(width: Int, height: Int) {
-            super.onSurfaceSizeChanged(width, height)
-            println("nannandenden onSurfaceSizeChanged $height $width")
-
-        }
-
-        override fun onRenderedFirstFrame() {
-            super.onRenderedFirstFrame()
-            println("nannandenden onRenderedFirstFrame")
-
-        }
-
-        override fun onCues(cueGroup: CueGroup) {
-            super.onCues(cueGroup)
-            println("nannandenden onCues")
-
-        }
     }
 
     companion object {
-        fun newInstance(): VideoFragment = VideoFragment()
+        fun newInstance(type: String): VideoFragment {
+            val fragment = VideoFragment()
+            fragment.arguments = bundleOf(KEY_VIDEO_TYPE to type)
+            return fragment
+        }
+
+        const val KEY_VIDEO_TYPE = "key_video_type"
+        const val VIDEO_NO_ADS = "Play(No Ads)"
+        const val VIDEO_CSAI = "Play(CSAI)"
+        const val VIDEO_SSAI = "Play(SSAI)"
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentVideoBinding.bind(view)
-        startPlay(requireContext())
+        val type = arguments?.getString(KEY_VIDEO_TYPE)
+        if (type.isNullOrEmpty()) {
+            activity?.supportFragmentManager?.popBackStack()
+        }
+        startPlay(requireContext(), type)
     }
 
     override fun onDestroyView() {
@@ -255,9 +113,12 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
         player.removeListener(listener)
         player.release()
         _binding = null
+        adsLoader?.setPlayer(null)
     }
 
-    private fun startPlay(context: Context) {
+    @OptIn(UnstableApi::class)
+    private fun startPlay(context: Context, type: String?) {
+        VideoAnalytics.initialize(context)
         VideoAnalytics.setContentInfo(
             mapOf(
                 ConvivaSdkConstants.ASSET_NAME to "Funny Cat",
@@ -272,28 +133,113 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
         VideoAnalytics.reportPlaybackRequested()
 
         // create a player
-        player = ExoPlayer.Builder(context).build()
-        VideoAnalytics.setPlayer(player)
+        player = getPlayer(context, type, binding.playerView)
         // attach to the playerView
         binding.playerView.player = player
-        player.addListener(listener)
-        player.addAnalyticsListener(EventLogger())
+        // set the player
+        VideoAnalytics.setPlayer(player)
+        adsLoader?.setPlayer(player)
+        serverSideAdsLoader?.setPlayer(player)
 
-        val mediaItem: MediaItem = getMediaItem()
-        println("nannandenden ${mediaItem.mediaMetadata}")
-
+        val mediaItem: MediaItem = getMediaItem(type)
         player.setMediaItem(mediaItem)
+        when(type) {
+            VIDEO_CSAI -> {
+                VideoAnalytics.setAdContentInfo(adsLoader!!, "test_ads_url")
+            }
+            VIDEO_SSAI -> {
+                VideoAnalytics.setAdContentInfo(serverSideAdsLoader!!)
+            }
+        }
 
         player.prepare()
+
+        player.addListener(listener)
+        player.addAnalyticsListener(EventLogger())
 
         player.play()
     }
 
-    private fun getMediaItem(): MediaItem {
-        return MediaItem.Builder()
-            .setUri("https://html5demos.com/assets/dizzy.mp4")
-            .setAdsConfiguration(MediaItem.AdsConfiguration.Builder(Uri.parse("https://storage.googleapis.com/exoplayer-test-media-1/mp4/frame-counter-one-hour.mp4")).build())
-            .build()
+    @OptIn(UnstableApi::class)
+    private fun getPlayer(context: Context, type: String?, playerView: PlayerView): ExoPlayer {
+        val player = ExoPlayer.Builder(context)
+        when(type) {
+            VIDEO_CSAI -> {
+                val dataSourceFactory: DataSource.Factory = DefaultDataSource.Factory(context)
+                if (adsLoader == null) {
+                    adsLoader = ImaAdsLoader
+                        .Builder(context)
+                        .setAdEventListener { adEvent: AdEvent ->
+                            when(adEvent.type) {
+                                AdEvent.AdEventType.STARTED -> {
+                                    VideoAnalytics.reportAdBreakStarted()
+                                }
+                                AdEvent.AdEventType.ALL_ADS_COMPLETED -> {
+                                    VideoAnalytics.reportAdBreakEnded()
+                                }
+                                else -> {
+                                    println("nannandenden ads ${adEvent.type}")
+                                }
+                            }
+
+                        }
+                        .build()
+                }
+                val mediaSourceFactory: MediaSource.Factory =
+                    DefaultMediaSourceFactory(dataSourceFactory)
+                        .setLocalAdInsertionComponents(
+                            { unusedAdTagUri: AdsConfiguration? -> adsLoader },
+                            playerView
+                        )
+                player.setMediaSourceFactory(mediaSourceFactory)
+            }
+            VIDEO_SSAI -> {
+                // MediaSource.Factory to load the actual media stream.
+                val defaultMediaSourceFactory = DefaultMediaSourceFactory(context)
+                if (serverSideAdsLoader == null) {
+                    serverSideAdsLoader = ImaServerSideAdInsertionMediaSource.AdsLoader
+                        .Builder(context, playerView)
+                        .setAdEventListener { adEvent: AdEvent ->
+                            when(adEvent.type) {
+                                AdEvent.AdEventType.STARTED, AdEvent.AdEventType.AD_BREAK_STARTED -> {
+                                    VideoAnalytics.reportAdBreakStarted(isClient = false)
+                                }
+                                AdEvent.AdEventType.AD_BREAK_ENDED -> {
+                                    VideoAnalytics.reportAdBreakEnded()
+                                }
+                                else -> {
+                                    println("nannandenden ${adEvent.type}")
+                                }
+                            }
+                        }
+                        .build()
+                }
+                val adsMediaSourceFactory =
+                    ImaServerSideAdInsertionMediaSource.Factory(serverSideAdsLoader!!, defaultMediaSourceFactory)
+                defaultMediaSourceFactory.setServerSideAdInsertionMediaSourceFactory(adsMediaSourceFactory)
+                player.setMediaSourceFactory(defaultMediaSourceFactory)
+            }
+        }
+        return player.build()
+    }
+
+    private fun getMediaItem(type: String?): MediaItem {
+        val media = MediaItem.Builder()
+
+            when(type) {
+                VIDEO_CSAI -> {
+                    val addTagUri = Uri.parse("https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator=")
+                    media.setUri("https://storage.googleapis.com/exoplayer-test-media-1/mkv/android-screens-lavf-56.36.100-aac-avc-main-1280x720.mkv")
+                        .setAdsConfiguration(MediaItem.AdsConfiguration.Builder(addTagUri).build())
+                }
+                VIDEO_SSAI -> {
+                    media.setUri("ssai://dai.google.com/?contentSourceId=2528370&videoId=tears-of-steel&format=2&adsId=1")
+                }
+                else -> {
+                    media.setUri("https://html5demos.com/assets/dizzy.mp4")
+                }
+            }
+        return media.build()
     }
 
 

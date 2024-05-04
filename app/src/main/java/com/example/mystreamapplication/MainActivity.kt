@@ -10,7 +10,7 @@ import com.conviva.sdk.ConvivaSdkConstants
 import com.example.mystreamapplication.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
-
+    // DryRun
     private val customerKeyDryRun = "1a6d7f0de15335c201e8e9aacbc7a0952f5191d7"
 
     private val mainViewModel: MainViewModel by viewModels()
@@ -25,12 +25,12 @@ class MainActivity : AppCompatActivity() {
         initConvivaSDK()
 
         val fragment = ChooserFragment.newInstance()
-        replaceFragment(fragment)
+        fragmentTransaction(fragment)
 
-        mainViewModel.startVideo.observe(this) { playVideo ->
-            if (playVideo) {
-                val videoFragment = VideoFragment.newInstance()
-                replaceFragment(videoFragment)
+        mainViewModel.playVideo.observe(this) { playVideo ->
+            if (!playVideo.isNullOrEmpty()) {
+                val videoFragment = VideoFragment.newInstance(playVideo)
+                fragmentTransaction(videoFragment, replace = false)
             }
         }
     }
@@ -49,11 +49,16 @@ class MainActivity : AppCompatActivity() {
             ConvivaSdkConstants.DEVICEINFO.DEVICE_VERSION to BuildConfig.VERSION
         ))
 
-        VideoAnalytics.initialize(this.applicationContext)
     }
 
-    private fun replaceFragment(fragment: Fragment) {
-        this.supportFragmentManager.beginTransaction().replace(R.id.fl_container, fragment).commit()
+    private fun fragmentTransaction(fragment: Fragment, replace: Boolean = true) {
+        val transaction = this.supportFragmentManager.beginTransaction()
+        if (replace) {
+            transaction.replace(R.id.fl_container, fragment)
+        } else {
+            transaction.add(R.id.fl_container, fragment)
+        }
+        transaction.commit()
     }
 
     override fun onDestroy() {

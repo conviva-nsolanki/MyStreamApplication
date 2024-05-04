@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mystreamapplication.databinding.FragmentChooserBinding
 
 class ChooserFragment: Fragment(R.layout.fragment_chooser) {
@@ -22,8 +23,15 @@ class ChooserFragment: Fragment(R.layout.fragment_chooser) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentChooserBinding.bind(view)
 
-        binding.btnStartVideo.setOnClickListener {
-            sharedViewModel.onStartVideSelected()
+        binding.rvPlayVideo.layoutManager = LinearLayoutManager(requireContext())
+        val adapter = ChooserAdapter { position ->
+
+            sharedViewModel.onPlayVideoSelected(position)
+        }
+        binding.rvPlayVideo.adapter = adapter
+
+        sharedViewModel.setVideos.observe(viewLifecycleOwner) { items ->
+            adapter.setData(items)
         }
 
     }

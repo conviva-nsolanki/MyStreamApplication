@@ -3,16 +3,26 @@ package com.example.mystreamapplication
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.mystreamapplication.VideoFragment.Companion.VIDEO_CSAI
+import com.example.mystreamapplication.VideoFragment.Companion.VIDEO_NO_ADS
+import com.example.mystreamapplication.VideoFragment.Companion.VIDEO_SSAI
 
-class MainViewModel: ViewModel() {
+class MainViewModel : ViewModel() {
 
-    private val _startVide = MutableLiveData(false)
-    val startVideo: LiveData<Boolean> = _startVide
+    private val _setVideos = MutableLiveData(listOf<String>())
+    val setVideos: LiveData<List<String>> = _setVideos
 
-    fun onStartVideSelected() {
-        _startVide.value = true
+    private val _playVideo = MutableLiveData<String>("")
+    val playVideo: LiveData<String> = _playVideo
+
+    init {
+        _setVideos.value = listOf(VIDEO_NO_ADS, VIDEO_CSAI, VIDEO_SSAI)
     }
 
+
+    fun onPlayVideoSelected(position: Int) {
+        _playVideo.value = _setVideos.value?.get(position)?: ""
+    }
 
 
 }
