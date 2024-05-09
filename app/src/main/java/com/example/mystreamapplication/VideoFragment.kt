@@ -23,7 +23,6 @@ import androidx.media3.exoplayer.ima.ImaAdsLoader
 import androidx.media3.exoplayer.ima.ImaServerSideAdInsertionMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
-import androidx.media3.exoplayer.source.ads.AdsLoader
 import androidx.media3.exoplayer.util.EventLogger
 import androidx.media3.ui.PlayerView
 import com.conviva.sdk.ConvivaSdkConstants
