@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    id("com.conviva.sdk.android-plugin")
 }
 
 android {
@@ -55,6 +56,7 @@ dependencies {
     implementation(libs.conviva.ima.sdk)
     implementation(libs.androidx.media3.exoplayer.hls)
     implementation(libs.conviva.exoplayer.sdk)
+    implementation("com.conviva.sdk:conviva-android-tracker:0.9.2")
     implementation(libs.androidx.media3.exoplayer.ima)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
