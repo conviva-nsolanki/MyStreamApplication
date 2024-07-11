@@ -5,7 +5,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.conviva.apptracker.ConvivaAppAnalytics
-import com.conviva.sdk.BuildConfig
 import com.conviva.sdk.ConvivaAnalytics
 import com.conviva.sdk.ConvivaSdkConstants
 import com.example.mystreamapplication.databinding.ActivityMainBinding
@@ -13,7 +12,7 @@ import com.example.mystreamapplication.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     // DryRun
-    private val customerKeyDryRun = ""
+    private val customerKey = "468d367fb7c75185f85fce6055377e50f6c0dd07"
 
     private val mainViewModel: MainViewModel by viewModels()
 
@@ -39,16 +38,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun initConvivaSDK() {
         // debug settings
-        val gatewayUrl = " https://dryrun.testonly.conviva.com"
+        val gatewayUrl = " https://internaltrainer.testonly.conviva.com"
         println("nannandenden initialize conviva sdk")
-        ConvivaAnalytics.init(this, customerKeyDryRun, mapOf(
+        ConvivaAnalytics.init(this, customerKey, mapOf(
             ConvivaSdkConstants.GATEWAY_URL to gatewayUrl,
             ConvivaSdkConstants.LOG_LEVEL to ConvivaSdkConstants.LogLevel.DEBUG
         ))
 
         ConvivaAppAnalytics.createTracker(
             this,
-            customerKeyDryRun,
+            customerKey,
             "Android Video"
         )?.also {
             ConvivaAppAnalytics.setTrackerAsDefault(it)

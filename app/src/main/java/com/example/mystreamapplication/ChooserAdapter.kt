@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import com.conviva.sdk.ConvivaSdkConstants
 import com.example.mystreamapplication.databinding.ItemChooserBinding
 
 class ChooserAdapter(private val callback: (Int) -> Unit): ListAdapter<String, ChooserAdapter.StartPlayViewHolder>(ChooserItemDiffCallback) {
@@ -31,9 +32,22 @@ class ChooserAdapter(private val callback: (Int) -> Unit): ListAdapter<String, C
     class StartPlayViewHolder(private val binding: ItemChooserBinding): ViewHolder(binding.root) {
         fun bind(item: String, position: Int, callback: (Int) -> Unit) {
             binding.btnChooser.text = item
-            println("nannandenden $item")
             binding.btnChooser.setOnClickListener {
+                println("nannandenden clicked! $item")
                 callback.invoke(position)
+                VideoAnalytics.initialize(binding.root.context)
+                VideoAnalytics.setContentInfo(
+                    mapOf(
+                        ConvivaSdkConstants.ASSET_NAME to (item),
+                        ConvivaSdkConstants.VIEWER_ID to "test_viewer_id",
+                        ConvivaSdkConstants.IS_LIVE to false,
+                        ConvivaSdkConstants.PLAYER_NAME to "Android",
+                        "Custom Business Info" to "custom"
+                    )
+                )
+                VideoAnalytics.setPlayerInfo()
+                VideoAnalytics.reportPlaybackRequested()
+                VideoAnalytics.initAdsSession(binding.root.context)
             }
         }
     }

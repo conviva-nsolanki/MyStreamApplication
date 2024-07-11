@@ -24,6 +24,7 @@ import com.conviva.sdk.ConvivaAdAnalytics
 import com.conviva.sdk.ConvivaAnalytics
 import com.conviva.sdk.ConvivaExperienceAnalytics.ICallback
 import com.conviva.sdk.ConvivaSdkConstants
+import com.conviva.sdk.ConvivaSdkConstants.ErrorSeverity
 import com.conviva.sdk.ConvivaVideoAnalytics
 import com.google.ads.interactivemedia.v3.api.Ad
 import com.google.ads.interactivemedia.v3.api.AdError
@@ -56,6 +57,7 @@ object VideoAnalytics: ICallback {
     private var bufferLength = -1
 
     fun initialize(context: Context) {
+        println("nannandenden buildVideoAnalytics")
         videoAnalytics = ConvivaAnalytics.buildVideoAnalytics(context)
     }
 
@@ -73,6 +75,7 @@ object VideoAnalytics: ICallback {
 
     fun reportPlaybackRequested() {
         if (::videoAnalytics.isInitialized) {
+            println("nannandenden reportPlaybackRequested")
             videoAnalytics.reportPlaybackRequested()
         } else {
             println("conviva ERROR: videoAnalytics not initialized")
@@ -95,25 +98,31 @@ object VideoAnalytics: ICallback {
 
     fun setContentInfo(contentInfo: Map<String, Any>) {
         if (::videoAnalytics.isInitialized) {
+            println("nannandenden setContentInfo")
             videoAnalytics.setContentInfo(contentInfo)
         } else {
             println("conviva ERROR: videoAnalytics not initialized")
         }
     }
     @OptIn(UnstableApi::class)
+    fun setPlayerInfo() {
+        val fwField: Field = MediaLibraryInfo::class.java.getDeclaredField("VERSION")
+        val version: String = fwField.get(null)?.toString()?: "N/A"
+        val playerInfo = hashMapOf<String, Any>(
+            ConvivaSdkConstants.FRAMEWORK_VERSION to version,
+            ConvivaSdkConstants.FRAMEWORK_NAME to "ExoPlayer"
+        )
+        println("nannandenden setPlayerInfo")
+        videoAnalytics.setPlayerInfo(playerInfo)
+    }
+
+    @OptIn(UnstableApi::class)
     fun setPlayer(player: ExoPlayer) {
         mPlayer = player
         createHandler()
         if (::videoAnalytics.isInitialized) {
             setCallback(this)
-            val fwField: Field = MediaLibraryInfo::class.java.getDeclaredField("VERSION")
-            val version: String = fwField.get(null)?.toString()?: "N/A"
-            val playerInfo = hashMapOf<String, Any>(
-                ConvivaSdkConstants.FRAMEWORK_VERSION to version,
-                ConvivaSdkConstants.FRAMEWORK_NAME to "ExoPlayer"
-            )
-            videoAnalytics.setPlayerInfo(playerInfo)
-            player.addAnalyticsListener(
+            mPlayer?.addAnalyticsListener(
                 object : AnalyticsListener {
                     override fun onPlaybackStateChanged(
                         eventTime: AnalyticsListener.EventTime,
@@ -351,19 +360,19 @@ object VideoAnalytics: ICallback {
 
     private fun setPlayerSeekStarted() {
         if (::videoAnalytics.isInitialized) {
-            videoAnalytics.reportPlaybackMetric(ConvivaSdkConstants.PLAYBACK.SEEK_STARTED)
+            reportPlaybackMetric(ConvivaSdkConstants.PLAYBACK.SEEK_STARTED)
         }
     }
 
     private fun setPlayerSeekEnd() {
         if (::videoAnalytics.isInitialized) {
-            videoAnalytics.reportPlaybackMetric(ConvivaSdkConstants.PLAYBACK.SEEK_ENDED)
+            reportPlaybackMetric(ConvivaSdkConstants.PLAYBACK.SEEK_ENDED)
         }
     }
 
     private fun setVideoResolution(width: Int, height: Int) {
         if (::videoAnalytics.isInitialized) {
-            videoAnalytics.reportPlaybackMetric(
+            reportPlaybackMetric(
                 ConvivaSdkConstants.PLAYBACK.RESOLUTION,
                 width,
                 height
@@ -379,7 +388,6 @@ object VideoAnalytics: ICallback {
                 pht = mPlayer!!.currentPosition
                 bufferLength =
                     (mPlayer!!.bufferedPosition - mPlayer!!.currentPosition).toInt()
-                println("conviva getMetrics currentPosition: $pht bufferLength: $bufferLength")
             }
         } catch (e: Exception) {
             //Log("Exception occurred " + e.getMessage(), SystemSettings.LogLevel.DEBUG);
@@ -389,7 +397,7 @@ object VideoAnalytics: ICallback {
 
     private fun setDroppedFrameCount(droppedFrameCount: Int) {
         if (::videoAnalytics.isInitialized && droppedFrameCount > 0) {
-            videoAnalytics.reportPlaybackMetric(
+            reportPlaybackMetric(
                 ConvivaSdkConstants.PLAYBACK.DROPPED_FRAMES_COUNT,
                 droppedFrameCount
             )
@@ -398,7 +406,7 @@ object VideoAnalytics: ICallback {
 
     private fun setEncodedFrameRate(frameRate: Int) {
         if (::videoAnalytics.isInitialized && frameRate >= 0) {
-            videoAnalytics.reportPlaybackMetric(
+            reportPlaybackMetric(
                 ConvivaSdkConstants.PLAYBACK.ENCODED_FRAMERATE,
                 frameRate
             )
@@ -495,22 +503,22 @@ object VideoAnalytics: ICallback {
         if (::videoAnalytics.isInitialized) {
             println("conviva reportPlaybackMetric PLAYER_STATE: $playerState")
             when (playerState) {
-                ConvivaSdkConstants.PlayerState.BUFFERING -> videoAnalytics.reportPlaybackMetric(
+                ConvivaSdkConstants.PlayerState.BUFFERING -> reportPlaybackMetric(
                     ConvivaSdkConstants.PLAYBACK.PLAYER_STATE,
                     ConvivaSdkConstants.PlayerState.BUFFERING
                 )
 
-                ConvivaSdkConstants.PlayerState.STOPPED -> videoAnalytics.reportPlaybackMetric(
+                ConvivaSdkConstants.PlayerState.STOPPED -> reportPlaybackMetric(
                     ConvivaSdkConstants.PLAYBACK.PLAYER_STATE,
                     ConvivaSdkConstants.PlayerState.STOPPED
                 )
 
-                ConvivaSdkConstants.PlayerState.PLAYING -> videoAnalytics.reportPlaybackMetric(
+                ConvivaSdkConstants.PlayerState.PLAYING -> reportPlaybackMetric(
                     ConvivaSdkConstants.PLAYBACK.PLAYER_STATE,
                     ConvivaSdkConstants.PlayerState.PLAYING
                 )
 
-                ConvivaSdkConstants.PlayerState.PAUSED -> videoAnalytics.reportPlaybackMetric(
+                ConvivaSdkConstants.PlayerState.PAUSED -> reportPlaybackMetric(
                     ConvivaSdkConstants.PLAYBACK.PLAYER_STATE,
                     ConvivaSdkConstants.PlayerState.PAUSED
                 )
@@ -525,30 +533,48 @@ object VideoAnalytics: ICallback {
         if (::videoAnalytics.isInitialized) {
             println("conviva sendPlayerError")
             if (ConvivaConstants.ErrorSeverity.FATAL == severity) {
-                videoAnalytics.reportPlaybackMetric(
-                    ConvivaSdkConstants.PLAYBACK.PLAYER_STATE,
-                    ConvivaSdkConstants.PlayerState.STOPPED
-                )
-                videoAnalytics.reportPlaybackError(
+                reportPlaybackMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.STOPPED)
+                reportPlaybackError(
                     errorMsg,
                     ConvivaSdkConstants.ErrorSeverity.FATAL
                 )
-            } else videoAnalytics.reportPlaybackError(
+            } else reportPlaybackError(
                 errorMsg,
                 ConvivaSdkConstants.ErrorSeverity.WARNING
             )
         }
     }
 
+    private fun reportPlaybackError(
+        errorMessage: String?,
+        severity: ErrorSeverity
+    ) {
+        println("nannandenden reportPlaybackError: $errorMessage")
+        videoAnalytics.reportPlaybackError(
+            errorMessage,
+            severity
+        )
+    }
+
+    private fun reportPlaybackMetric(key: String, vararg value: Any) {
+        if (key == ConvivaSdkConstants.PLAYBACK.PLAYER_STATE && value[0] is ConvivaSdkConstants.PlayerState) {
+            println("nannandenden reportPlaybackMetric: $key, ${(value[0] as ConvivaSdkConstants.PlayerState).name}")
+        } else {
+            println("nannandenden reportPlaybackMetric: $key")
+        }
+        videoAnalytics.reportPlaybackMetric(key, value)
+    }
+
     private fun setPlayerBitrateKbps(bitrate: Int, isAvgBitrate: Boolean) {
         if (::videoAnalytics.isInitialized && bitrate >= 0) {
             if (!isAvgBitrate) {
-                videoAnalytics.reportPlaybackMetric(
+                reportPlaybackMetric(
                     ConvivaSdkConstants.PLAYBACK.BITRATE,
-                    bitrate, true
+                    bitrate,
+                    true
                 )
             } else {
-                videoAnalytics.reportPlaybackMetric(
+                reportPlaybackMetric(
                     ConvivaSdkConstants.PLAYBACK.AVG_BITRATE,
                     bitrate, true
                 )
@@ -609,15 +635,6 @@ object VideoAnalytics: ICallback {
         }
     }
 
-    fun reportPlaybackMetric(key: String, vararg value: Any) {
-        if (::videoAnalytics.isInitialized) {
-            println("conviva reportPlaybackMetric")
-            videoAnalytics.reportPlaybackMetric(key, value)
-        } else {
-            println("conviva ERROR: videoAnalytics not initialized")
-        }
-    }
-
     fun setCallback(callback: ICallback) {
         if (::videoAnalytics.isInitialized) {
             println("conviva setCallback")
@@ -627,78 +644,98 @@ object VideoAnalytics: ICallback {
         }
     }
     fun logAdEvent(adEvent: AdEvent, isClient: Boolean = true) {
-        when(adEvent.type) {
-            AdEvent.AdEventType.LOADED -> {
-                val metadata: HashMap<String, Any> = getAdsMetadata(adEvent.ad, isClient)
-                val playerinfo: MutableMap<String, Any> = java.util.HashMap()
-                playerinfo[ConvivaSdkConstants.FRAMEWORK_NAME] = "Google IMA SDK"
-                playerinfo[ConvivaSdkConstants.FRAMEWORK_VERSION] = "3.11.2"
-                adsAnalytics.reportAdLoaded(metadata)
-                adsAnalytics.setAdPlayerInfo(playerinfo)
-            }
-            AdEvent.AdEventType.STARTED -> {
-                val metadata: HashMap<String, Any> = getAdsMetadata(adEvent.ad, isClient)
-                adsAnalytics.reportAdStarted(metadata)
-                adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.PLAYING)
-                adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.BITRATE, adEvent.ad.vastMediaBitrate)
-                adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.RESOLUTION, adEvent.ad.vastMediaWidth, adEvent.ad.vastMediaHeight)
-            }
-            AdEvent.AdEventType.SKIPPED -> {
-                adsAnalytics.reportAdSkipped()
-            }
-            AdEvent.AdEventType.AD_PROGRESS -> {
-                adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.BITRATE, adEvent.ad.vastMediaBitrate)
-            }
-            AdEvent.AdEventType.PAUSED -> {
-                adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.PAUSED)
-            }
-            AdEvent.AdEventType.AD_BUFFERING -> {
-                adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.BUFFERING)
-            }
-            AdEvent.AdEventType.RESUMED -> {
-                adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.PLAYING)
-                adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.BITRATE, adEvent.ad.vastMediaBitrate)
-            }
-            AdEvent.AdEventType.ALL_ADS_COMPLETED -> {
+        if (::adsAnalytics.isInitialized) {
+            when(adEvent.type) {
+                AdEvent.AdEventType.LOADED -> {
+                    val metadata: HashMap<String, Any> = getAdsMetadata(adEvent.ad, isClient)
+                    val playerinfo: MutableMap<String, Any> = java.util.HashMap()
+                    playerinfo[ConvivaSdkConstants.FRAMEWORK_NAME] = "Google IMA SDK"
+                    playerinfo[ConvivaSdkConstants.FRAMEWORK_VERSION] = "3.11.2"
+                    adsAnalytics.reportAdLoaded(metadata)
+                    adsAnalytics.setAdPlayerInfo(playerinfo)
+                }
+                AdEvent.AdEventType.STARTED -> {
+                    val metadata: HashMap<String, Any> = getAdsMetadata(adEvent.ad, isClient)
+                    adsAnalytics.reportAdStarted(metadata)
+                    adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.PLAYING)
+                    adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.BITRATE, adEvent.ad.vastMediaBitrate)
+                    adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.RESOLUTION, adEvent.ad.vastMediaWidth, adEvent.ad.vastMediaHeight)
+                }
+                AdEvent.AdEventType.SKIPPED -> {
+                    adsAnalytics.reportAdSkipped()
+                }
+                AdEvent.AdEventType.AD_PROGRESS -> {
+                    if (adEvent == null) {
+                        println("nannandenden adEvent null")
+                    } else if (adEvent.ad == null) {
+                        println("nannandenden adEvent.ad null")
+                    } else {
+                        adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.BITRATE, adEvent.ad.vastMediaBitrate)
+                    }
+                }
+                AdEvent.AdEventType.PAUSED -> {
+                    adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.PAUSED)
+                }
+                AdEvent.AdEventType.AD_BUFFERING -> {
+                    adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.BUFFERING)
+                }
+                AdEvent.AdEventType.RESUMED -> {
+                    adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.PLAYING)
+                    adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.BITRATE, adEvent.ad.vastMediaBitrate)
+                }
+                AdEvent.AdEventType.ALL_ADS_COMPLETED -> {
 
-            }
-            AdEvent.AdEventType.COMPLETED -> {
-                adsAnalytics.reportAdEnded()
-            }
-            AdEvent.AdEventType.CONTENT_PAUSE_REQUESTED -> {
-                if (isClient) {
-                    val podInfo: AdPodInfo = adEvent.ad.adPodInfo
-                    mPodBreakPostion =
-                        if (podInfo.podIndex == 0) "PREROLL" else if (podInfo.podIndex == -1) "POSTROLL" else "MIDROLL"
-                    mPodIndex++
-                    val podStartAttributes: MutableMap<String, Any> = java.util.HashMap()
-                    podStartAttributes[ConvivaSdkConstants.POD_DURATION] =
-                        podInfo.maxDuration.toString()
-                    podStartAttributes[ConvivaSdkConstants.POD_POSITION] = mPodBreakPostion!!
-                    podStartAttributes[ConvivaSdkConstants.POD_INDEX] = mPodIndex.toString()
-                    videoAnalytics.reportAdBreakStarted(ConvivaSdkConstants.AdPlayer.SEPARATE, ConvivaSdkConstants.AdType.CLIENT_SIDE, podStartAttributes)
                 }
-            }
-            AdEvent.AdEventType.CONTENT_RESUME_REQUESTED -> {
-                if (isClient) {
-                    videoAnalytics.reportAdBreakEnded()
+                AdEvent.AdEventType.COMPLETED -> {
+                    adsAnalytics.reportAdEnded()
                 }
-            }
-            AdEvent.AdEventType.LOG -> {
+                AdEvent.AdEventType.CONTENT_PAUSE_REQUESTED -> {
+                    if (isClient) {
+                        val podInfo: AdPodInfo = adEvent.ad.adPodInfo
+                        mPodBreakPostion =
+                            if (podInfo.podIndex == 0) "PREROLL" else if (podInfo.podIndex == -1) "POSTROLL" else "MIDROLL"
+                        mPodIndex++
+                        val podStartAttributes: MutableMap<String, Any> = java.util.HashMap()
+                        podStartAttributes[ConvivaSdkConstants.POD_DURATION] =
+                            podInfo.maxDuration.toString()
+                        podStartAttributes[ConvivaSdkConstants.POD_POSITION] = mPodBreakPostion!!
+                        podStartAttributes[ConvivaSdkConstants.POD_INDEX] = mPodIndex.toString()
+                        reportAdBreakStarted(ConvivaSdkConstants.AdPlayer.SEPARATE, ConvivaSdkConstants.AdType.CLIENT_SIDE, podStartAttributes)
+                    }
+                }
+                AdEvent.AdEventType.CONTENT_RESUME_REQUESTED -> {
+                    if (isClient) {
+                        reportAdBreakEnded()
+                    }
+                }
+                AdEvent.AdEventType.LOG -> {
 
-            }
-            AdEvent.AdEventType.AD_BREAK_STARTED -> {
-                if (isClient.not()) {
-                    videoAnalytics.reportAdBreakStarted(ConvivaSdkConstants.AdPlayer.CONTENT, ConvivaSdkConstants.AdType.SERVER_SIDE)
                 }
-            }
-            AdEvent.AdEventType.AD_BREAK_ENDED -> {
-                if (isClient.not()) {
-                    videoAnalytics.reportAdBreakEnded()
+                AdEvent.AdEventType.AD_BREAK_STARTED -> {
+                    if (isClient.not()) {
+                        reportAdBreakStarted(adPlayer = ConvivaSdkConstants.AdPlayer.CONTENT, adType = ConvivaSdkConstants.AdType.SERVER_SIDE, mapOf())
+                    }
                 }
+                AdEvent.AdEventType.AD_BREAK_ENDED -> {
+                    if (isClient.not()) {
+                        reportAdBreakEnded()
+                    }
+                }
+                else -> {}
             }
-            else -> {}
+        } else {
+            println("nannandenden adAnalytics not initialized")
         }
+    }
+
+    private fun reportAdBreakEnded() {
+        println("nannandenden reportAdBreakEnded")
+        videoAnalytics.reportAdBreakEnded()
+    }
+
+    private fun reportAdBreakStarted(adPlayer: ConvivaSdkConstants.AdPlayer, adType: ConvivaSdkConstants.AdType, info: Map<String, Any>) {
+        println("nannandenden reportAdBreakStarted :${adPlayer.name} ${adType.name}")
+        videoAnalytics.reportAdBreakStarted(adPlayer, adType, info)
     }
 
     private fun getAdsMetadata(ad: Ad, isClient: Boolean): java.util.HashMap<String, Any> {
@@ -788,7 +825,6 @@ object VideoAnalytics: ICallback {
     }
 
     override fun update() {
-        println("conviva update")
         updateMetrics()
     }
 
@@ -805,11 +841,11 @@ object VideoAnalytics: ICallback {
 
     private fun updatedMetrics(pht: Long, bufferLength: Int) {
         if (::videoAnalytics.isInitialized) {
-            videoAnalytics.reportPlaybackMetric(
+            reportPlaybackMetric(
                 ConvivaSdkConstants.PLAYBACK.PLAY_HEAD_TIME,
                 pht
             )
-            videoAnalytics.reportPlaybackMetric(
+            reportPlaybackMetric(
                 ConvivaSdkConstants.PLAYBACK.BUFFER_LENGTH,
                 if (bufferLength >= 0) bufferLength else -1
             )
