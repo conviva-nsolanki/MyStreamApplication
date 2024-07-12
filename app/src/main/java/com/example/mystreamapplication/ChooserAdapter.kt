@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.conviva.sdk.ConvivaSdkConstants
+import com.example.mystreamapplication.VideoFragment.Companion.VIDEO_NO_ADS
 import com.example.mystreamapplication.databinding.ItemChooserBinding
 
 class ChooserAdapter(private val callback: (Int) -> Unit): ListAdapter<String, ChooserAdapter.StartPlayViewHolder>(ChooserItemDiffCallback) {
@@ -46,8 +47,9 @@ class ChooserAdapter(private val callback: (Int) -> Unit): ListAdapter<String, C
                     )
                 )
                 VideoAnalytics.setPlayerInfo()
-                VideoAnalytics.reportPlaybackRequested()
-                VideoAnalytics.initAdsSession(binding.root.context)
+                if (item != VIDEO_NO_ADS) {
+                    VideoAnalytics.initAdsSession(binding.root.context)
+                }
             }
         }
     }

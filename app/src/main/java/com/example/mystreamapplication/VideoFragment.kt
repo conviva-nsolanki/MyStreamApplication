@@ -113,6 +113,7 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
     private fun startPlay(context: Context, type: String?) {
         // create a player
         player = getPlayer(context, type, binding.playerView)
+        VideoAnalytics.reportPlaybackRequested()
         // set the player
         VideoAnalytics.setPlayer(player)
         adsLoader?.setPlayer(player)
