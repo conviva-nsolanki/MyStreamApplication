@@ -56,6 +56,7 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer.hls)
     implementation(libs.conviva.exoplayer.sdk)
     implementation(libs.androidx.media3.exoplayer.ima)
+    implementation("com.conviva.sdk:conviva-android-tracker:0.9.2")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
