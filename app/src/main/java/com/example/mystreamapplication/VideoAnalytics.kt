@@ -57,7 +57,7 @@ object VideoAnalytics: ICallback {
     private var bufferLength = -1
 
     fun initialize(context: Context) {
-        println("nannandenden buildVideoAnalytics")
+        println("conviva buildVideoAnalytics")
         videoAnalytics = ConvivaAnalytics.buildVideoAnalytics(context)
     }
 
@@ -75,7 +75,7 @@ object VideoAnalytics: ICallback {
 
     fun reportPlaybackRequested() {
         if (::videoAnalytics.isInitialized) {
-            println("nannandenden reportPlaybackRequested")
+            println("conviva reportPlaybackRequested")
             videoAnalytics.reportPlaybackRequested()
         } else {
             println("conviva ERROR: videoAnalytics not initialized")
@@ -98,7 +98,7 @@ object VideoAnalytics: ICallback {
 
     fun setContentInfo(contentInfo: Map<String, Any>) {
         if (::videoAnalytics.isInitialized) {
-            println("nannandenden setContentInfo")
+            println("conviva setContentInfo")
             videoAnalytics.setContentInfo(contentInfo)
         } else {
             println("conviva ERROR: videoAnalytics not initialized")
@@ -112,7 +112,7 @@ object VideoAnalytics: ICallback {
             ConvivaSdkConstants.FRAMEWORK_VERSION to version,
             ConvivaSdkConstants.FRAMEWORK_NAME to "ExoPlayer"
         )
-        println("nannandenden setPlayerInfo")
+        println("conviva setPlayerInfo")
         videoAnalytics.setPlayerInfo(playerInfo)
     }
 
@@ -549,7 +549,7 @@ object VideoAnalytics: ICallback {
         errorMessage: String?,
         severity: ErrorSeverity
     ) {
-        println("nannandenden reportPlaybackError: $errorMessage")
+        println("conviva reportPlaybackError: $errorMessage")
         videoAnalytics.reportPlaybackError(
             errorMessage,
             severity
@@ -558,9 +558,9 @@ object VideoAnalytics: ICallback {
 
     private fun reportPlaybackMetric(key: String, vararg value: Any) {
         if (key == ConvivaSdkConstants.PLAYBACK.PLAYER_STATE && value[0] is ConvivaSdkConstants.PlayerState) {
-            println("nannandenden reportPlaybackMetric: $key, ${(value[0] as ConvivaSdkConstants.PlayerState).name}")
+            println("conviva reportPlaybackMetric: $key, ${(value[0] as ConvivaSdkConstants.PlayerState).name}")
         } else {
-            println("nannandenden reportPlaybackMetric: $key")
+            println("conviva reportPlaybackMetric: $key")
         }
         videoAnalytics.reportPlaybackMetric(key, value)
     }
@@ -666,9 +666,9 @@ object VideoAnalytics: ICallback {
                 }
                 AdEvent.AdEventType.AD_PROGRESS -> {
                     if (adEvent == null) {
-                        println("nannandenden adEvent null")
+                        println("conviva adEvent null")
                     } else if (adEvent.ad == null) {
-                        println("nannandenden adEvent.ad null")
+                        println("conviva adEvent.ad null")
                     } else {
                         adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.BITRATE, adEvent.ad.vastMediaBitrate)
                     }
@@ -724,17 +724,17 @@ object VideoAnalytics: ICallback {
                 else -> {}
             }
         } else {
-            println("nannandenden adAnalytics not initialized")
+            println("conviva adAnalytics not initialized")
         }
     }
 
     private fun reportAdBreakEnded() {
-        println("nannandenden reportAdBreakEnded")
+        println("conviva reportAdBreakEnded")
         videoAnalytics.reportAdBreakEnded()
     }
 
     private fun reportAdBreakStarted(adPlayer: ConvivaSdkConstants.AdPlayer, adType: ConvivaSdkConstants.AdType, info: Map<String, Any>) {
-        println("nannandenden reportAdBreakStarted :${adPlayer.name} ${adType.name}")
+        println("conviva reportAdBreakStarted :${adPlayer.name} ${adType.name}")
         videoAnalytics.reportAdBreakStarted(adPlayer, adType, info)
     }
 

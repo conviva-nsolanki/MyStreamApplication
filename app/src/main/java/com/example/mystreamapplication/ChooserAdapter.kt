@@ -34,7 +34,7 @@ class ChooserAdapter(private val callback: (Int) -> Unit): ListAdapter<String, C
         fun bind(item: String, position: Int, callback: (Int) -> Unit) {
             binding.btnChooser.text = item
             binding.btnChooser.setOnClickListener {
-                println("nannandenden clicked! $item")
+                println("conviva clicked! $item")
                 callback.invoke(position)
                 VideoAnalytics.initialize(binding.root.context)
                 VideoAnalytics.setContentInfo(

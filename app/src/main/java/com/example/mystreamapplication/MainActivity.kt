@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
     private fun initConvivaSDK() {
         // debug settings
         val gatewayUrl = " https://internaltrainer.testonly.conviva.com"
-        println("nannandenden initialize conviva sdk")
+        println("conviva initialize conviva sdk")
         ConvivaAnalytics.init(this, customerKey, mapOf(
             ConvivaSdkConstants.GATEWAY_URL to gatewayUrl,
             ConvivaSdkConstants.LOG_LEVEL to ConvivaSdkConstants.LogLevel.DEBUG

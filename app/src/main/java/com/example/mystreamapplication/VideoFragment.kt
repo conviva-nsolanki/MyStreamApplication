@@ -61,19 +61,19 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
                 }
                 else -> "invalid state"
             }
-            println("nannandenden onPlaybackStateChanged $state")
+            println("conviva onPlaybackStateChanged $state")
 
         }
 
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
-            println("nannandenden onPlayerError")
+            println("conviva onPlayerError")
 
         }
 
         override fun onPlayerErrorChanged(error: PlaybackException?) {
             super.onPlayerErrorChanged(error)
-            println("nannandenden onPlayerErrorChanged")
+            println("conviva onPlayerErrorChanged")
 
         }
     }
@@ -111,9 +111,9 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
 
     @OptIn(UnstableApi::class)
     private fun startPlay(context: Context, type: String?) {
+        VideoAnalytics.reportPlaybackRequested()
         // create a player
         player = getPlayer(context, type, binding.playerView)
-        VideoAnalytics.reportPlaybackRequested()
         // set the player
         VideoAnalytics.setPlayer(player)
         adsLoader?.setPlayer(player)
