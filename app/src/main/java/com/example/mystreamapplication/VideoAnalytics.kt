@@ -149,41 +149,58 @@ object VideoAnalytics {
     fun logAdEvent(adEvent: AdEvent, isClient: Boolean = true) {
         when(adEvent.type) {
             AdEvent.AdEventType.LOADED -> {
-                val metadata: HashMap<String, Any> = getAdsMetadata(adEvent.ad, isClient)
-                val playerinfo: MutableMap<String, Any> = java.util.HashMap()
-                playerinfo[ConvivaSdkConstants.FRAMEWORK_NAME] = "Google IMA SDK"
-                playerinfo[ConvivaSdkConstants.FRAMEWORK_VERSION] = "3.11.2"
-                adsAnalytics.reportAdLoaded(metadata)
-                adsAnalytics.setAdPlayerInfo(playerinfo)
+                if (::adsAnalytics.isInitialized) {
+                    val metadata: HashMap<String, Any> = getAdsMetadata(adEvent.ad, isClient)
+                    val playerinfo: MutableMap<String, Any> = java.util.HashMap()
+//                playerinfo[ConvivaSdkConstants.FRAMEWORK_NAME] = "Google IMA SDK"
+//                playerinfo[ConvivaSdkConstants.FRAMEWORK_VERSION] = "3.11.2"
+                    adsAnalytics.reportAdLoaded(metadata)
+                    adsAnalytics.setAdPlayerInfo(playerinfo)
+                }
             }
             AdEvent.AdEventType.STARTED -> {
-                val metadata: HashMap<String, Any> = getAdsMetadata(adEvent.ad, isClient)
-                adsAnalytics.reportAdStarted(metadata)
-                adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.PLAYING)
-                adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.BITRATE, adEvent.ad.vastMediaBitrate)
-                adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.RESOLUTION, adEvent.ad.vastMediaWidth, adEvent.ad.vastMediaHeight)
+                if (::adsAnalytics.isInitialized) {
+                    val metadata: HashMap<String, Any> = getAdsMetadata(adEvent.ad, isClient)
+                    adsAnalytics.reportAdStarted(metadata)
+                    adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.PLAYING)
+                    adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.BITRATE, adEvent.ad.vastMediaBitrate)
+                    adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.RESOLUTION, adEvent.ad.vastMediaWidth, adEvent.ad.vastMediaHeight)
+                }
             }
             AdEvent.AdEventType.SKIPPED -> {
-                adsAnalytics.reportAdSkipped()
+                if (::adsAnalytics.isInitialized) {
+                    adsAnalytics.reportAdSkipped()
+                }
             }
             AdEvent.AdEventType.AD_PROGRESS -> {
-                adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.BITRATE, adEvent.ad.vastMediaBitrate)
+                if (::adsAnalytics.isInitialized) {
+                    adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.BITRATE, adEvent.ad.vastMediaBitrate)
+                }
             }
             AdEvent.AdEventType.PAUSED -> {
-                adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.PAUSED)
+                if (::adsAnalytics.isInitialized) {
+                    adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.PAUSED)
+                }
             }
             AdEvent.AdEventType.AD_BUFFERING -> {
-                adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.BUFFERING)
+                if (::adsAnalytics.isInitialized) {
+                    adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.BUFFERING)
+                }
             }
             AdEvent.AdEventType.RESUMED -> {
-                adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.PLAYING)
-                adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.BITRATE, adEvent.ad.vastMediaBitrate)
+                if (::adsAnalytics.isInitialized) {
+                    adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.PLAYER_STATE, ConvivaSdkConstants.PlayerState.PLAYING)
+                    adsAnalytics.reportAdMetric(ConvivaSdkConstants.PLAYBACK.BITRATE, adEvent.ad.vastMediaBitrate)
+                }
             }
             AdEvent.AdEventType.ALL_ADS_COMPLETED -> {
 
             }
             AdEvent.AdEventType.COMPLETED -> {
-                adsAnalytics.reportAdEnded()
+                println("nannandenden reportAdBreakEnded")
+                if (::adsAnalytics.isInitialized) {
+                    adsAnalytics.reportAdEnded()
+                }
             }
             AdEvent.AdEventType.CONTENT_PAUSE_REQUESTED -> {
                 if (isClient) {
@@ -305,6 +322,14 @@ object VideoAnalytics {
     private fun handleAdError(errorAdMetadata: MutableMap<String, Any>, errorMessage: String) {
         adsAnalytics.reportAdError(errorMessage, ConvivaSdkConstants.ErrorSeverity.FATAL)
         adsAnalytics.reportAdEnded()
+    }
+
+    fun reportPlaybackEvent() {
+        if (::videoAnalytics.isInitialized) {
+            videoAnalytics.reportPlaybackEvent("atribute", mapOf("playback event" to "playback event value"))
+        } else {
+            println("nannandenden ERROR: videoAnalytics not initialized")
+        }
     }
 
 

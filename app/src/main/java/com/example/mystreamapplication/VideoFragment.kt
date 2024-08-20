@@ -3,6 +3,7 @@ package com.example.mystreamapplication
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore.Video
 import android.view.View
 import androidx.annotation.OptIn
 import androidx.core.os.bundleOf
@@ -11,6 +12,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaItem.AdsConfiguration
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.Player.EVENT_IS_PLAYING_CHANGED
 import androidx.media3.common.Player.STATE_BUFFERING
 import androidx.media3.common.Player.STATE_ENDED
 import androidx.media3.common.Player.STATE_IDLE
@@ -42,7 +44,7 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
 
     private var startAutoPlay: Boolean = true
 
-    private val ADD_TAG_URL = "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator="
+    private val ADD_TAG_URL = "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/ad_rule_samples&ciu_szs=300x250&ad_rule=1&impl=s&gdfp_req=1&env=vp&output=vmap&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ar%3Dpreonly&cmsid=496&vid=short_onecue&correlator="
     private val CSAI_URL = "https://storage.googleapis.com/exoplayer-test-media-1/mkv/android-screens-lavf-56.36.100-aac-avc-main-1280x720.mkv"
     private val SSAI_URL = "ssai://dai.google.com/?contentSourceId=2559737&videoId=tos-dash&format=0&adsId=1"
 
@@ -123,7 +125,8 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
                 ConvivaSdkConstants.VIEWER_ID to "test_viewer_id",
                 ConvivaSdkConstants.IS_LIVE to false,
                 ConvivaSdkConstants.PLAYER_NAME to "Android",
-                "Custom Business Info" to "custom"
+                "Custom Business Info" to "custom",
+                "test attribute key" to "default"
             )
         )
 
@@ -134,6 +137,7 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
         // create a player
         player = getPlayer(context, type, binding.playerView)
         // set the player
+        println("nannandenden setPlayer called")
         VideoAnalytics.setPlayer(player)
         adsLoader?.setPlayer(player)
         serverSideAdsLoader?.setPlayer(player)
