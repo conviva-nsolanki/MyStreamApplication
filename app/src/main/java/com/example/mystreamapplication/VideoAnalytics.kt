@@ -1,6 +1,7 @@
 package com.example.mystreamapplication
 
 import android.content.Context
+import android.util.Log
 import androidx.media3.exoplayer.ExoPlayer
 import com.conviva.sdk.ConvivaAdAnalytics
 import com.conviva.sdk.ConvivaAnalytics
@@ -14,6 +15,8 @@ import com.google.ads.interactivemedia.v3.api.AdEvent
 import com.google.ads.interactivemedia.v3.api.AdPodInfo
 
 object VideoAnalytics {
+    
+    const val TAG = "Conviva Video Analytics: "
 
     private lateinit var videoAnalytics: ConvivaVideoAnalytics
     private lateinit var adsAnalytics: ConvivaAdAnalytics
@@ -33,7 +36,7 @@ object VideoAnalytics {
             adTagInfo["c3.ad.adManagerVersion"] = "3.31.0"
             adsAnalytics.setAdInfo(adTagInfo)
         } else {
-            println("nannandenden ERROR: videoAnalytics not initialized")
+            Log.d(TAG, "ERROR: videoAnalytics not initialized")
         }
     }
 
@@ -41,7 +44,7 @@ object VideoAnalytics {
         if (::videoAnalytics.isInitialized) {
             videoAnalytics.reportPlaybackRequested()
         } else {
-            println("nannandenden ERROR: videoAnalytics not initialized")
+            Log.d(TAG, "ERROR: videoAnalytics not initialized")
         }
     }
 
@@ -55,7 +58,7 @@ object VideoAnalytics {
                 }
             }
         } else {
-            println("nannandenden ERROR: adsAnalytics not initialized")
+            Log.d(TAG, "ERROR: adsAnalytics not initialized")
         }
     }
 
@@ -63,16 +66,7 @@ object VideoAnalytics {
         if (::videoAnalytics.isInitialized) {
             videoAnalytics.setContentInfo(contentInfo)
         } else {
-            println("nannandenden ERROR: videoAnalytics not initialized")
-        }
-    }
-
-    fun reportPlaybackEnded() {
-        if (::videoAnalytics.isInitialized) {
-            println("nannandenden reportPlaybackEnded")
-            videoAnalytics.reportPlaybackEnded()
-        } else {
-            println("nannandenden ERROR: videoAnalytics not initialized")
+            Log.d(TAG, "ERROR: videoAnalytics not initialized")
         }
     }
 
@@ -80,50 +74,50 @@ object VideoAnalytics {
         if (::videoAnalytics.isInitialized) {
             videoAnalytics.setPlayer(player)
         } else {
-            println("nannandenden ERROR: videoAnalytics not initialized")
+            Log.d(TAG, "ERROR: videoAnalytics not initialized")
         }
     }
 
     fun release() {
         if (::videoAnalytics.isInitialized) {
-            println("nannandenden release video player")
+            Log.d(TAG, "release video player")
             videoAnalytics.release()
         } else {
-            println("nannandenden ERROR: videoAnalytics not initialized")
+            Log.d(TAG, "ERROR: videoAnalytics not initialized")
         }
 
         if (::adsAnalytics.isInitialized) {
-            println("nannandenden release video player")
+            Log.d(TAG, "release video player")
             adsAnalytics.release()
         } else {
-            println("nannandenden ERROR: adsAnalytics not initialized")
+            Log.d(TAG, "ERROR: adsAnalytics not initialized")
         }
     }
 
     fun reportPlaybackFailed(errorMessage: String) {
         if (::videoAnalytics.isInitialized) {
-            println("nannandenden reportPlaybackFailed")
+            Log.d(TAG, "reportPlaybackFailed")
             videoAnalytics.reportPlaybackFailed(errorMessage)
         } else {
-            println("nannandenden ERROR: videoAnalytics not initialized")
+            Log.d(TAG, "ERROR: videoAnalytics not initialized")
         }
     }
 
     fun reportPlaybackMetric(key: String, vararg value: Any) {
         if (::videoAnalytics.isInitialized) {
-            println("nannandenden reportPlaybackMetric")
+            Log.d(TAG, "reportPlaybackMetric")
             videoAnalytics.reportPlaybackMetric(key, value)
         } else {
-            println("nannandenden ERROR: videoAnalytics not initialized")
+            Log.d(TAG, "ERROR: videoAnalytics not initialized")
         }
     }
 
     fun setCallback(callback: ICallback) {
         if (::videoAnalytics.isInitialized) {
-            println("nannandenden setCallback")
+            Log.d(TAG, "setCallback")
             videoAnalytics.setCallback(callback)
         } else {
-            println("nannandenden ERROR: videoAnalytics not initialized")
+            Log.d(TAG, "ERROR: videoAnalytics not initialized")
         }
     }
 
@@ -134,7 +128,7 @@ object VideoAnalytics {
                 if (isClient) ConvivaSdkConstants.AdType.CLIENT_SIDE else ConvivaSdkConstants.AdType.SERVER_SIDE
             )
         } else {
-            println("nannandenden ERROR: adsAnalytics not initialized")
+            Log.d(TAG, "ERROR: adsAnalytics not initialized")
         }
     }
 
@@ -142,7 +136,7 @@ object VideoAnalytics {
         if (::adsAnalytics.isInitialized) {
             videoAnalytics.reportAdBreakEnded()
         } else {
-            println("nannandenden ERROR: adsAnalytics not initialized")
+            Log.d(TAG, "ERROR: adsAnalytics not initialized")
         }
     }
 
@@ -151,11 +145,11 @@ object VideoAnalytics {
             AdEvent.AdEventType.LOADED -> {
                 if (::adsAnalytics.isInitialized) {
                     val metadata: HashMap<String, Any> = getAdsMetadata(adEvent.ad, isClient)
-                    val playerinfo: MutableMap<String, Any> = java.util.HashMap()
-//                playerinfo[ConvivaSdkConstants.FRAMEWORK_NAME] = "Google IMA SDK"
-//                playerinfo[ConvivaSdkConstants.FRAMEWORK_VERSION] = "3.11.2"
+                    val playerInfo: MutableMap<String, Any> = java.util.HashMap()
+                    playerInfo[ConvivaSdkConstants.FRAMEWORK_NAME] = "ExoPlayer IMA Extension"
+                    playerInfo[ConvivaSdkConstants.FRAMEWORK_VERSION] = "1.1.1"
                     adsAnalytics.reportAdLoaded(metadata)
-                    adsAnalytics.setAdPlayerInfo(playerinfo)
+                    adsAnalytics.setAdPlayerInfo(playerInfo)
                 }
             }
             AdEvent.AdEventType.STARTED -> {
@@ -197,7 +191,7 @@ object VideoAnalytics {
 
             }
             AdEvent.AdEventType.COMPLETED -> {
-                println("nannandenden reportAdBreakEnded")
+                Log.d(TAG, "reportAdBreakEnded")
                 if (::adsAnalytics.isInitialized) {
                     adsAnalytics.reportAdEnded()
                 }
@@ -328,7 +322,7 @@ object VideoAnalytics {
         if (::videoAnalytics.isInitialized) {
             videoAnalytics.reportPlaybackEvent("atribute", mapOf("playback event" to "playback event value"))
         } else {
-            println("nannandenden ERROR: videoAnalytics not initialized")
+            Log.d(TAG, "ERROR: videoAnalytics not initialized")
         }
     }
 

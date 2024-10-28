@@ -9,7 +9,7 @@ import com.example.mystreamapplication.databinding.FragmentChooserBinding
 
 class ChooserFragment: Fragment(R.layout.fragment_chooser) {
 
-    val sharedViewModel: MainViewModel by activityViewModels()
+    private val sharedViewModel: MainViewModel by activityViewModels()
 
     private var _binding: FragmentChooserBinding? = null
     private val binding: FragmentChooserBinding

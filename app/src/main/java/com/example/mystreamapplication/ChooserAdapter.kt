@@ -31,7 +31,6 @@ class ChooserAdapter(private val callback: (Int) -> Unit): ListAdapter<String, C
     class StartPlayViewHolder(private val binding: ItemChooserBinding): ViewHolder(binding.root) {
         fun bind(item: String, position: Int, callback: (Int) -> Unit) {
             binding.btnChooser.text = item
-            println("nannandenden $item")
             binding.btnChooser.setOnClickListener {
                 callback.invoke(position)
             }

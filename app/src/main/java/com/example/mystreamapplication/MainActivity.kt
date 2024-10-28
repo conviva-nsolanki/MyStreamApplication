@@ -1,17 +1,19 @@
 package com.example.mystreamapplication
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.conviva.apptracker.ConvivaAppAnalytics
 import com.conviva.sdk.ConvivaAnalytics
 import com.conviva.sdk.ConvivaSdkConstants
+import com.example.mystreamapplication.VideoAnalytics.TAG
 import com.example.mystreamapplication.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
-    // DryRun
-    private val customerKeyDryRun = "468d367fb7c75185f85fce6055377e50f6c0dd07"
+
+    private val customerKey = "468d367fb7c75185f85fce6055377e50f6c0dd07"
 
     private val mainViewModel: MainViewModel by viewModels()
 
@@ -37,17 +39,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun initConvivaSDK() {
         // debug settings
-        val gatewayUrl = "https://Internaltrainer.testonly.conviva.com"
-        println("nannandenden initialize conviva sdk")
-        ConvivaAnalytics.init(this.applicationContext, customerKeyDryRun, mapOf(
+        val gatewayUrl = "https://" + customerKey + ".testonly.conviva.com"
+        Log.d(TAG, "initialize conviva sdk")
+        ConvivaAnalytics.init(this.applicationContext, customerKey, mapOf(
             ConvivaSdkConstants.GATEWAY_URL to gatewayUrl,
             ConvivaSdkConstants.LOG_LEVEL to ConvivaSdkConstants.LogLevel.DEBUG
         ))
 
         ConvivaAppAnalytics.createTracker(
             this.applicationContext,
-            customerKeyDryRun,
-            "Android"
+            customerKey,
+            "Stream Sample App"
         )?.also { tracker ->
             tracker.subject.userId = "test_user_id"
         }

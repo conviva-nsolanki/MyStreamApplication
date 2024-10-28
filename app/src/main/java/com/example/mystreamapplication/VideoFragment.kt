@@ -3,7 +3,7 @@ package com.example.mystreamapplication
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore.Video
+import android.util.Log
 import android.view.View
 import androidx.annotation.OptIn
 import androidx.core.os.bundleOf
@@ -12,7 +12,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaItem.AdsConfiguration
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.Player.EVENT_IS_PLAYING_CHANGED
 import androidx.media3.common.Player.STATE_BUFFERING
 import androidx.media3.common.Player.STATE_ENDED
 import androidx.media3.common.Player.STATE_IDLE
@@ -25,10 +24,10 @@ import androidx.media3.exoplayer.ima.ImaAdsLoader
 import androidx.media3.exoplayer.ima.ImaServerSideAdInsertionMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
-import androidx.media3.exoplayer.source.ads.AdsLoader
 import androidx.media3.exoplayer.util.EventLogger
 import androidx.media3.ui.PlayerView
 import com.conviva.sdk.ConvivaSdkConstants
+import com.example.mystreamapplication.VideoAnalytics.TAG
 import com.example.mystreamapplication.databinding.FragmentVideoBinding
 import com.google.ads.interactivemedia.v3.api.AdEvent
 
@@ -40,47 +39,49 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
         get() = _binding!!
     private lateinit var player: ExoPlayer
 
-    private var adsLoader: ImaAdsLoader? = null
-
     private var startAutoPlay: Boolean = true
 
     private val ADD_TAG_URL = "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/ad_rule_samples&ciu_szs=300x250&ad_rule=1&impl=s&gdfp_req=1&env=vp&output=vmap&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ar%3Dpreonly&cmsid=496&vid=short_onecue&correlator="
     private val CSAI_URL = "https://storage.googleapis.com/exoplayer-test-media-1/mkv/android-screens-lavf-56.36.100-aac-avc-main-1280x720.mkv"
     private val SSAI_URL = "ssai://dai.google.com/?contentSourceId=2559737&videoId=tos-dash&format=0&adsId=1"
 
+    private var adsLoader: ImaAdsLoader? = null
+
     @UnstableApi
     private var serverSideAdsLoader: ImaServerSideAdInsertionMediaSource.AdsLoader? = null
 
     private val listener: Player.Listener = object : Player.Listener {
-        override fun onEvents(player: Player, events: Player.Events) {
-            super.onEvents(player, events)
-
-        }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
             super.onPlaybackStateChanged(playbackState)
-            val state = when(playbackState) {
-                STATE_IDLE -> { "idle" }
-                STATE_BUFFERING -> {"buffering"}
-                STATE_READY -> { "ready" }
+            val state = when (playbackState) {
+                STATE_IDLE -> {
+                    "idle"
+                }
+                STATE_BUFFERING -> {
+                    "buffering"
+                }
+                STATE_READY -> {
+                    "ready"
+                }
                 STATE_ENDED -> {
                     "ended"
                 }
                 else -> "invalid state"
             }
-            println("nannandenden onPlaybackStateChanged $state")
+            Log.d(TAG, "onPlaybackStateChanged $state")
 
         }
 
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
-            println("nannandenden onPlayerError")
+            Log.d(TAG, " onPlayerError")
 
         }
 
         override fun onPlayerErrorChanged(error: PlaybackException?) {
             super.onPlayerErrorChanged(error)
-            println("nannandenden onPlayerErrorChanged")
+            Log.d(TAG, " onPlayerErrorChanged")
 
         }
     }
@@ -114,6 +115,7 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
         player.release()
         _binding = null
         adsLoader?.setPlayer(null)
+        VideoAnalytics.release()
     }
 
     @OptIn(UnstableApi::class)
@@ -124,8 +126,8 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
                 ConvivaSdkConstants.ASSET_NAME to (type?: "No name"),
                 ConvivaSdkConstants.VIEWER_ID to "test_viewer_id",
                 ConvivaSdkConstants.IS_LIVE to false,
-                ConvivaSdkConstants.PLAYER_NAME to "Android",
-                "Custom Business Info" to "custom",
+                ConvivaSdkConstants.PLAYER_NAME to "Stream Sample App",
+                "custom_business_logic_tag" to "custom",
                 "test attribute key" to "default"
             )
         )
@@ -137,7 +139,7 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
         // create a player
         player = getPlayer(context, type, binding.playerView)
         // set the player
-        println("nannandenden setPlayer called")
+        Log.d(TAG, " setPlayer called")
         VideoAnalytics.setPlayer(player)
         adsLoader?.setPlayer(player)
         serverSideAdsLoader?.setPlayer(player)
@@ -160,8 +162,6 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
         binding.playerView.player = player
 
         player.prepare()
-        // when set player.playWhenReady, no need this method to start playing
-//        player.play()
     }
 
     @OptIn(UnstableApi::class)
@@ -174,7 +174,7 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
                     adsLoader = ImaAdsLoader
                         .Builder(context)
                         .setAdEventListener { adEvent: AdEvent ->
-                            println("nannandenden ${adEvent.type}")
+                            Log.d(TAG, " ${adEvent.type}")
                             VideoAnalytics.logAdEvent(adEvent)
                         }
                         .setAdErrorListener { adErrorEvent ->
@@ -197,7 +197,7 @@ class VideoFragment : Fragment(R.layout.fragment_video) {
                     serverSideAdsLoader = ImaServerSideAdInsertionMediaSource.AdsLoader
                         .Builder(context, playerView)
                         .setAdEventListener { adEvent: AdEvent ->
-                            println("nannandenden ${adEvent.type}")
+                            Log.d(TAG, " ${adEvent.type}")
                             VideoAnalytics.logAdEvent(adEvent, isClient = false)
                         }
                         .setAdErrorListener { adErrorEvent ->
